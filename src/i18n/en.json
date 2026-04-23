@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "RapidPulse",
+    "solution_tag": "Built for Google Solution Challenge",
+    "tagline": "Amplifying community impact with AI",
+    "copyright": "Built for Google Solution Challenge · 2025"
+  },
+  "nav": {
+    "home": "Home",
+    "how_it_works": "How it works",
+    "for_ngos": "For NGOs",
+    "for_volunteers": "For Volunteers",
+    "login": "Log in",
+    "signup": "Get started",
+    "dashboard": "Dashboard",
+    "verify": "Verify Certificate"
+  },
+  "hero": {
+    "headline": "The pulse of your community, amplified by AI",
+    "sub": "RapidPulse connects NGOs and volunteers through AI-powered need detection, smart matching, and real-time community intelligence.",
+    "cta_ngo": "I'm an NGO →",
+    "cta_vol": "I want to volunteer",
+    "stat_needs": "2,400+ needs resolved",
+    "stat_vols": "850+ volunteers",
+    "stat_ngos": "12 NGOs active"
+  },
+  "how_it_works": {
+    "title": "How RapidPulse works",
+    "sub": "From paper survey to matched volunteer in minutes",
+    "step1_title": "Capture",
+    "step1_desc": "NGO workers photograph paper surveys. Gemini Vision reads Hindi or English handwriting and extracts structured need data automatically.",
+    "step2_title": "Classify",
+    "step2_desc": "Each need is assigned a severity score (1–5) strictly based on immediate life risk vs. long-term development needs.",
+    "step3_title": "Connect",
+    "step3_desc": "RapidPulse matches volunteers using skills, location radius, and Gemini reasoning — showing NGOs exactly why each volunteer was recommended."
+  },
+  "for_ngos": {
+    "tag": "FOR NGOS",
+    "title": "See every community need, clearly",
+    "bullet1": "Upload paper surveys with one photo",
+    "bullet2": "AI extracts and scores every need automatically",
+    "bullet3": "Live heatmap of needs by urgency and category",
+    "bullet4": "Smart volunteer matching with AI reasoning",
+    "bullet5": "One-click impact reports for funders",
+    "mock_badge": "HIGH · Severity 4",
+    "mock_title": "Medical supplies needed — 23 elderly residents",
+    "mock_location": "Mandoli, Delhi · 0.8km away",
+    "mock_category": "Healthcare",
+    "mock_matched": "3 volunteers matched"
+  },
+  "for_volunteers": {
+    "tag": "FOR VOLUNTEERS",
+    "title": "Turn your skills into real impact",
+    "bullet1": "Build a skill profile in minutes",
+    "bullet2": "See tasks matched to you by location and skill",
+    "bullet3": "Earn XP, badges, and streaks every week",
+    "bullet4": "Download a verified certificate of contribution",
+    "bullet5": "Appear on your area's volunteer leaderboard",
+    "mock_name": "Priya Sharma",
+    "mock_level": "Community Champion · Level 4",
+    "mock_stats": "47 hours · 23 tasks · 4.9★"
+  },
+  "impact": {
+    "title": "Real impact, measured",
+    "label1": "Community needs addressed",
+    "label2": "Volunteer hours logged",
+    "label3": "Lives impacted",
+    "label4": "NGO partners"
+  },
+  "cta": {
+    "title": "Ready to make a difference?",
+    "sub": "Join RapidPulse today — whether you run an NGO or want to volunteer.",
+    "btn_ngo": "Register your NGO",
+    "btn_vol": "Become a volunteer"
+  },
+  "severity": {
+    "5": "Critical",
+    "4": "High",
+    "3": "Moderate",
+    "2": "Low",
+    "1": "Informational"
+  },
+  "cert": {
+    "title": "Certificate of Contribution",
+    "subtitle": "In recognition of dedicated community service",
+    "presented": "This certificate is proudly presented to",
+    "tasks": "Tasks done",
+    "hours": "Hours served",
+    "impact": "Lives impacted",
+    "rating": "Avg rating",
+    "download": "Download Certificate"
+  }
+}
