@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
@@ -24,6 +24,7 @@ export default function Tasks() {
   const [findNeeds, setFindNeeds] = useState([]);
   const [acceptedIds, setAcceptedIds] = useState(new Set());
   const [loadingNeeds, setLoadingNeeds] = useState(false);
+  const [loadingMyTasks, setLoadingMyTasks] = useState(true);
 
   // Filters
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -33,11 +34,38 @@ export default function Tasks() {
   useEffect(() => {
     if (!currentUser) return;
     const fetchMyTasks = async () => {
+      setLoadingMyTasks(true);
       const q = query(collection(db, 'tasks'), where('volunteerId', '==', currentUser.uid));
       const snap = await getDocs(q);
-      const tasks = [];
-      snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-      setMyTasks(tasks);
+      const rawTasks = [];
+      snap.forEach(d => rawTasks.push({ id: d.id, ...d.data() }));
+
+      // Enrich each task with real need data (title, category, location, severity)
+      const enriched = await Promise.all(
+        rawTasks.map(async (task) => {
+          if (task.needId) {
+            try {
+              const needSnap = await getDoc(doc(db, 'needs', task.needId));
+              if (needSnap.exists()) {
+                const need = needSnap.data();
+                return {
+                  ...task,
+                  title: need.title,
+                  category: need.category,
+                  locationName: need.locationName || need.location,
+                  severityScore: need.severityScore,
+                  ngoName: need.ngoName,
+                };
+              }
+            } catch (e) {
+              console.warn('Could not fetch need for task', task.id, e);
+            }
+          }
+          return task;
+        })
+      );
+      setMyTasks(enriched);
+      setLoadingMyTasks(false);
     };
     fetchMyTasks();
   }, [currentUser]);
@@ -137,7 +165,25 @@ export default function Tasks() {
         <AnimatePresence mode="wait">
           {activeTab === 'my' && (
             <motion.div key="my" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-              {myTasks.length === 0 ? (
+              {loadingMyTasks ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 animate-pulse">
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <div className="h-5 w-16 bg-white/10 rounded-full" />
+                          <div className="h-5 w-20 bg-white/10 rounded-full" />
+                        </div>
+                        <div className="h-5 w-3/4 bg-white/10 rounded" />
+                        <div className="flex gap-3">
+                          <div className="h-4 w-28 bg-white/10 rounded" />
+                          <div className="h-4 w-32 bg-white/10 rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : myTasks.length === 0 ? (
                 <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center text-[#5A5A72]">
                   <CheckCircle size={48} className="mx-auto mb-4 opacity-30" />
                   <p className="text-lg">No tasks yet. Accept tasks from the Find Tasks tab.</p>
@@ -150,11 +196,27 @@ export default function Tasks() {
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: `${statusColor(task.status)}15`, color: statusColor(task.status), border: `1px solid ${statusColor(task.status)}30` }}>
                           {task.status?.charAt(0).toUpperCase() + task.status?.slice(1)}
                         </span>
+                        {task.category && (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] text-[#A0A0B8] border border-white/[0.08]">{task.category}</span>
+                        )}
+                        {task.severityScore && (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-bold" style={{ backgroundColor: `${getSeverityColor(task.severityScore)}15`, color: getSeverityColor(task.severityScore) }}>
+                            Sev {task.severityScore}
+                          </span>
+                        )}
                       </div>
-                      <h3 className="font-semibold text-[16px]">{task.needId || 'Task'}</h3>
-                      <div className="text-sm text-[#A0A0B8] flex items-center gap-1">
-                        <Clock size={14} /> Assigned: {task.assignedAt ? new Date(task.assignedAt.seconds * 1000).toLocaleDateString('en-IN') : 'Recently'}
+                      <h3 className="font-semibold text-[16px]">{task.title || 'Unnamed Task'}</h3>
+                      <div className="flex flex-wrap gap-3 text-sm text-[#A0A0B8]">
+                        {task.locationName && (
+                          <span className="flex items-center gap-1"><MapPin size={13} />{task.locationName}</span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Clock size={13} /> Assigned: {task.assignedAt ? new Date(task.assignedAt.seconds * 1000).toLocaleDateString('en-IN') : 'Recently'}
+                        </span>
                       </div>
+                      {task.ngoName && (
+                        <p className="text-xs text-[#5A5A72]">by {task.ngoName}</p>
+                      )}
                     </div>
                     {task.status === 'completed' && task.ngoRating && (
                       <div className="flex items-center gap-1 text-[#FFD700]">
@@ -233,9 +295,23 @@ export default function Tasks() {
 
               {/* Results */}
               {loadingNeeds ? (
-                <div className="text-center py-16 text-[#A0A0B8]">
-                  <Search size={36} className="mx-auto mb-3 animate-pulse opacity-50" />
-                  <p>Finding tasks near you...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 animate-pulse space-y-3">
+                      <div className="flex justify-between">
+                        <div className="h-5 w-24 bg-white/10 rounded-full" />
+                        <div className="h-4 w-14 bg-white/10 rounded" />
+                      </div>
+                      <div className="h-3 w-16 bg-white/10 rounded" />
+                      <div className="h-5 w-3/4 bg-white/10 rounded" />
+                      <div className="h-3 w-full bg-white/10 rounded" />
+                      <div className="flex gap-2">
+                        <div className="h-5 w-14 bg-white/10 rounded-full" />
+                        <div className="h-5 w-14 bg-white/10 rounded-full" />
+                      </div>
+                      <div className="h-10 w-full bg-white/10 rounded-xl mt-1" />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

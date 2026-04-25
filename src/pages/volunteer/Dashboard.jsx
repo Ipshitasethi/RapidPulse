@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, updateDoc, doc, addDoc, getDoc, serv
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Clock, CheckCircle, Flame, ChevronRight, Star, Zap } from 'lucide-react';
+import { MapPin, Clock, CheckCircle, Flame, ChevronRight, Star, Zap, Search } from 'lucide-react';
 
 const XP_LEVELS = [
   { level: 1, name: 'Newcomer', xpRequired: 0 },
@@ -52,6 +52,8 @@ export default function VolunteerDashboard() {
   const [nearbyNeeds, setNearbyNeeds] = useState([]);
   const [xpFloats, setXpFloats] = useState({});
   const [localXP, setLocalXP] = useState(userData?.xp || 0);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [loadingNeeds, setLoadingNeeds] = useState(true);
 
   const xp = localXP;
   const { current: currentLevel, next: nextLevel } = getCurrentLevel(xp);
@@ -67,6 +69,7 @@ export default function VolunteerDashboard() {
   useEffect(() => {
     if (!currentUser) return;
     const fetchTasks = async () => {
+      setLoadingTasks(true);
       const q = query(
         collection(db, 'tasks'),
         where('volunteerId', '==', currentUser.uid),
@@ -88,9 +91,11 @@ export default function VolunteerDashboard() {
                   ...task,
                   title: need.title,
                   category: need.category,
-                  locationName: need.locationName,
+                  // needs doc uses 'location'; alias as 'locationName' for display
+                  locationName: need.locationName || need.location,
                   severityScore: need.severityScore,
                   ngoId: need.ngoId,
+                  description: need.description,
                 };
               }
             } catch (e) {
@@ -101,9 +106,11 @@ export default function VolunteerDashboard() {
         })
       );
       setActiveTasks(enriched);
+      setLoadingTasks(false);
     };
 
     const fetchNeeds = async () => {
+      setLoadingNeeds(true);
       const q = query(collection(db, 'needs'), where('status', '==', 'pending'));
       const snap = await getDocs(q);
       const needs = [];
@@ -118,6 +125,7 @@ export default function VolunteerDashboard() {
       } else {
         setNearbyNeeds(needs.slice(0, 5));
       }
+      setLoadingNeeds(false);
     };
 
     fetchTasks();
@@ -252,7 +260,25 @@ export default function VolunteerDashboard() {
           </span>
         </div>
 
-        {activeTasks.length === 0 ? (
+        {loadingTasks ? (
+          <div className="space-y-4">
+            {[1, 2].map(i => (
+              <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-3 h-3 rounded-full bg-white/10 mt-1.5" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 w-20 bg-white/10 rounded-full" />
+                    <div className="h-5 w-3/4 bg-white/10 rounded" />
+                    <div className="flex gap-3">
+                      <div className="h-4 w-28 bg-white/10 rounded" />
+                      <div className="h-4 w-20 bg-white/10 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : activeTasks.length === 0 ? (
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-10 text-center text-[#5A5A72]">
             <CheckCircle size={40} className="mx-auto mb-3 opacity-40" />
             <p>No active assignments. Accept nearby tasks to get started!</p>
@@ -293,6 +319,27 @@ export default function VolunteerDashboard() {
           <span className="text-xs text-[#A0A0B8] flex items-center gap-1"><MapPin size={12} /> Near you</span>
         </div>
 
+        {loadingNeeds ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 animate-pulse space-y-3">
+                <div className="flex justify-between">
+                  <div className="h-5 w-20 bg-white/10 rounded-full" />
+                  <div className="h-4 w-14 bg-white/10 rounded" />
+                </div>
+                <div className="h-3 w-16 bg-white/10 rounded" />
+                <div className="h-5 w-3/4 bg-white/10 rounded" />
+                <div className="h-3 w-1/2 bg-white/10 rounded" />
+                <div className="h-9 w-full bg-white/10 rounded-xl mt-2" />
+              </div>
+            ))}
+          </div>
+        ) : nearbyNeeds.length === 0 ? (
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-10 text-center text-[#5A5A72]">
+            <Search size={40} className="mx-auto mb-3 opacity-40" />
+            <p>No nearby tasks found. Check back soon or expand your travel radius!</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {nearbyNeeds.map((need, idx) => (
             <motion.div
@@ -319,7 +366,7 @@ export default function VolunteerDashboard() {
                 <h3 className="font-semibold leading-tight">{need.title}</h3>
               </div>
               <div className="flex items-center gap-1 text-xs text-[#A0A0B8]">
-                <MapPin size={12} /> {need.locationName}
+                <MapPin size={12} /> {need.locationName || need.location}
               </div>
               {need.suggestedSkills?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
@@ -338,6 +385,7 @@ export default function VolunteerDashboard() {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

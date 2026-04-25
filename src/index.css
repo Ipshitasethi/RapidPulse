@@ -103,3 +103,64 @@ body {
   border-color: rgba(108, 71, 255, 0.3);
   transform: translateY(-2px);
 }
+
+/* === MICRO-INTERACTIONS === */
+
+/* Button hover: scale + brightness */
+button:not(:disabled) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+button:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Badge hover glow (use via data-badge-color attribute) */
+.badge-card {
+  transition: all 0.3s ease;
+}
+.badge-card:hover {
+  transform: scale(1.04);
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+
+/* Severity-5 pulse glow */
+@keyframes sev5pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,59,59,0.2); }
+  50% { box-shadow: 0 0 18px rgba(255,59,59,0.45); }
+}
+.sev5-pulse {
+  animation: sev5pulse 2s ease-in-out infinite;
+}
+
+/* Floating XP text animation */
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-48px); }
+}
+.xp-float {
+  animation: floatUp 1.4s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Mobile responsive overrides */
+@media (max-width: 768px) {
+  .desktop-sidebar { display: none; }
+  .mobile-tab-bar { display: flex; }
+}
+@media (min-width: 769px) {
+  .mobile-tab-bar { display: none; }
+}
