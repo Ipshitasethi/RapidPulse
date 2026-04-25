@@ -27,17 +27,28 @@ import VerifyCertificate from './pages/VerifyCertificate';
 const ProtectedRoute = ({ children, role }) => {
   const { currentUser, userRole, loading } = useAuth();
   
+  // Still initializing auth
   if (loading) return null;
   
+  // Not logged in at all
   if (!currentUser) {
     return <Navigate to="/login" />;
   }
   
-  // If userRole is still null (no profile), send them to signup
+  // Logged in but role not yet fetched from Firestore — show a spinner to avoid
+  // redirecting to /signup during the async Firestore read that happens after login.
   if (!userRole) {
-    return <Navigate to="/signup" />;
+    return (
+      <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#6C47FF] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[#A0A0B8] text-sm animate-pulse">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
   
+  // Wrong role — redirect to correct dashboard
   if (role && userRole !== role) {
     return <Navigate to={userRole === 'ngo' ? '/ngo/dashboard' : '/volunteer/dashboard'} />;
   }
@@ -46,6 +57,7 @@ const ProtectedRoute = ({ children, role }) => {
 };
 
 import NGOLayout from './layouts/NGOLayout';
+import VolunteerLayout from './layouts/VolunteerLayout';
 import { Outlet } from 'react-router-dom';
 
 const PublicLayout = () => (
@@ -65,22 +77,15 @@ function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify/:certId" element={<VerifyCertificate />} />
 
-        {/* Volunteer Routes */}
-        <Route path="/volunteer/dashboard" element={
-          <ProtectedRoute role="volunteer"><VolunteerDashboard /></ProtectedRoute>
-        } />
-        <Route path="/volunteer/tasks" element={
-          <ProtectedRoute role="volunteer"><Tasks /></ProtectedRoute>
-        } />
-        <Route path="/volunteer/badges" element={
-          <ProtectedRoute role="volunteer"><Badges /></ProtectedRoute>
-        } />
-        <Route path="/volunteer/leaderboard" element={
-          <ProtectedRoute role="volunteer"><Leaderboard /></ProtectedRoute>
-        } />
-        <Route path="/volunteer/profile" element={
-          <ProtectedRoute role="volunteer"><Profile /></ProtectedRoute>
-        } />
+      </Route>
+
+      {/* Volunteer Routes using VolunteerLayout */}
+      <Route element={<ProtectedRoute role="volunteer"><VolunteerLayout /></ProtectedRoute>}>
+        <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
+        <Route path="/volunteer/tasks" element={<Tasks />} />
+        <Route path="/volunteer/badges" element={<Badges />} />
+        <Route path="/volunteer/leaderboard" element={<Leaderboard />} />
+        <Route path="/volunteer/profile" element={<Profile />} />
       </Route>
 
       {/* NGO Routes using specialized NGOLayout */}
